@@ -9,37 +9,33 @@ if (isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Escapar dados para evitar SQL Injection (Segurança extra!)
+    
     $nome = $conn->real_escape_string($_POST['nome']);
     $email = $conn->real_escape_string($_POST['email']);
     $data_nascimento = $conn->real_escape_string($_POST['data_nascimento']); 
     
     $senha_plana = $_POST['senha'];
 
-    // --- REGRAS DE SEGURANÇA DA SENHA ---
-    $uppercase = preg_match('@[A-Z]@', $senha_plana); // Pelo menos uma maiúscula
-    $lowercase = preg_match('@[a-z]@', $senha_plana); // Pelo menos uma minúscula
-    $number    = preg_match('@[0-9]@', $senha_plana); // Pelo menos um número
-    $specialChars = preg_match('@[^\w]@', $senha_plana); // Pelo menos um caractere especial (!@#$%)
+    $uppercase = preg_match('@[A-Z]@', $senha_plana); 
+    $lowercase = preg_match('@[a-z]@', $senha_plana); 
+    $number    = preg_match('@[0-9]@', $senha_plana); 
+    $specialChars = preg_match('@[^\w]@', $senha_plana); 
 
-    // Verifica se cumpre todas as regras e tem pelo menos 8 caracteres
     if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($senha_plana) < 8) {
         $erro = "A senha deve ter pelo menos 8 caracteres, incluir uma letra maiúscula, um número e um caractere especial.";
     } else {
-        // Se a senha for forte, encriptamos
+        
         $senha_hash = password_hash($senha_plana, PASSWORD_DEFAULT);
 
-        // Verifica se email já existe
         $checkEmail = $conn->query("SELECT id FROM utilizadores WHERE email='$email'");
         
         if ($checkEmail->num_rows == 0) {
-            // 1. Inserir utilizador 
+            
             $sql = "INSERT INTO utilizadores (nome, email, data_nascimento, senha) VALUES ('$nome', '$email', '$data_nascimento', '$senha_hash')";
             
             if ($conn->query($sql) === TRUE) {
                 $last_id = $conn->insert_id;
-                
-                // 2. Gerar QR Code Único
+
                 $conteudoQR = "MEMBRO-" . $last_id . "-" . md5($email); 
                 
                 if (!file_exists('qrcodes')) {
@@ -49,10 +45,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $caminhoFicheiro = "qrcodes/qr_" . $last_id . ".png";
                 QRcode::png($conteudoQR, $caminhoFicheiro, QR_ECLEVEL_L, 4, 4);
 
-                // 3. Atualizar caminho do QR Code na BD
                 $conn->query("UPDATE utilizadores SET qrcode_path='$caminhoFicheiro' WHERE id=$last_id");
 
-                // Define a mensagem de sucesso
                 $sucesso = "Registo efetuado com sucesso! Já pode fazer login.";
             } else {
                 $erro = "Erro na base de dados: " . $conn->error;
