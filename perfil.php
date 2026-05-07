@@ -2,7 +2,6 @@
 session_start();
 include 'config/db.php';
 
-// 1. SEGURANÇA BÁSICA
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -10,24 +9,22 @@ if (!isset($_SESSION['user_id'])) {
 
 $id_user = $_SESSION['user_id'];
 
-// --- LÓGICA DE CANCELAMENTO DE INSCRIÇÃO ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['cancelar_inscricao'])) {
     $id_inscricao = (int)$_POST['id_inscricao'];
     $id_evento = (int)$_POST['id_evento'];
-    
-    // Verificar se a inscrição pertence mesmo a este utilizador (Segurança)
+
     $stmt_check = $conn->prepare("SELECT id FROM inscricoes WHERE id = ? AND id_utilizador = ?");
     $stmt_check->bind_param("ii", $id_inscricao, $id_user);
     $stmt_check->execute();
     $result_check = $stmt_check->get_result();
 
     if ($result_check->num_rows > 0) {
-        // Apagar a inscrição
+        
         $stmt_delete = $conn->prepare("DELETE FROM inscricoes WHERE id = ?");
         $stmt_delete->bind_param("i", $id_inscricao);
         
         if ($stmt_delete->execute()) {
-            // Devolver a vaga ao evento
+            
             $conn->query("UPDATE eventos SET vagas_ocupadas = vagas_ocupadas - 1 WHERE id = $id_evento");
             $mensagem_sucesso = "Inscrição cancelada com sucesso. Esperamos vê-lo num próximo evento!";
         } else {
@@ -38,39 +35,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['cancelar_inscricao']))
     }
 }
 
-// --- LÓGICA DE ATUALIZAR PERFIL ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['atualizar_perfil'])) {
     $novo_nome = $_POST['nome'];
     $novo_email = $_POST['email'];
     $nova_pass = trim($_POST['nova_password']);
-    $pode_atualizar = true; // Variável de controlo
+    $pode_atualizar = true; 
 
     if (!empty($nova_pass)) {
-        // --- REGRAS DE SEGURANÇA DA SENHA ---
-        $uppercase = preg_match('@[A-Z]@', $nova_pass); // Pelo menos uma maiúscula
-        $lowercase = preg_match('@[a-z]@', $nova_pass); // Pelo menos uma minúscula
-        $number    = preg_match('@[0-9]@', $nova_pass); // Pelo menos um número
-        $specialChars = preg_match('@[^\w]@', $nova_pass); // Pelo menos um caractere especial (!@#$%)
+        
+        $uppercase = preg_match('@[A-Z]@', $nova_pass); 
+        $lowercase = preg_match('@[a-z]@', $nova_pass); 
+        $number    = preg_match('@[0-9]@', $nova_pass); 
+        $specialChars = preg_match('@[^\w]@', $nova_pass); 
 
-        // Verifica se cumpre todas as regras e tem pelo menos 8 caracteres
         if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($nova_pass) < 8) {
             $mensagem_erro = "A palavra-passe deve ter pelo menos 8 caracteres, incluir uma maiúscula, uma minúscula, um número e um caractere especial.";
             $pode_atualizar = false;
         } else {
-            // Atualiza com nova password (segura)
+            
             $pass_hash = password_hash($nova_pass, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("UPDATE utilizadores SET nome = ?, email = ?, senha = ? WHERE id = ?");
             $stmt->bind_param("sssi", $novo_nome, $novo_email, $pass_hash, $id_user);
         }
     } else {
-        // Atualiza apenas nome e email
+        
         $stmt = $conn->prepare("UPDATE utilizadores SET nome = ?, email = ? WHERE id = ?");
         $stmt->bind_param("ssi", $novo_nome, $novo_email, $id_user);
     }
 
     if ($pode_atualizar) {
         if ($stmt->execute()) {
-            $_SESSION['nome'] = $novo_nome; // Atualiza a sessão
+            $_SESSION['nome'] = $novo_nome; 
             $mensagem_sucesso = "Perfil atualizado com sucesso!";
         } else {
             $mensagem_erro = "Erro ao atualizar perfil. O email já pode estar em uso.";
@@ -78,7 +73,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['atualizar_perfil'])) {
     }
 }
 
-// 2. BUSCAR DADOS DO UTILIZADOR
 $sql_user = "SELECT * FROM utilizadores WHERE id = '$id_user'";
 $result_user = $conn->query($sql_user);
 
@@ -89,7 +83,6 @@ if ($result_user->num_rows > 0) {
     exit;
 }
 
-// 3. BUSCAR AS INSCRIÇÕES DO MEMBRO
 $sql_inscricoes = "SELECT i.id as id_inscricao, e.id as id_evento, e.titulo, e.data_evento 
                    FROM inscricoes i 
                    JOIN eventos e ON i.id_evento = e.id 
@@ -269,7 +262,6 @@ function fecharModalPerfil() {
     document.getElementById('modalPerfil').style.display = 'none';
 }
 
-// Fechar automaticamente se o utilizador clicar fora da caixa branca
 window.onclick = function(event) {
     var modal = document.getElementById('modalPerfil');
     if (event.target == modal) {
@@ -277,12 +269,10 @@ window.onclick = function(event) {
     }
 }
 
-// Validação da senha com as tuas regras rigorosas
 function validarSenha() {
     var pass = document.getElementById('inputPass').value;
     var aviso = document.getElementById('avisoSenha');
-    
-    // Regras (Expressões Regulares no JavaScript)
+
     var temMaiuscula = /[A-Z]/.test(pass);
     var temMinuscula = /[a-z]/.test(pass);
     var temNumero = /[0-9]/.test(pass);
