@@ -8,7 +8,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $data_nasc = $_POST['data_nascimento'];
 
-    // Verificar se o utilizador existe com esses dados exatos
     $stmt = $conn->prepare("SELECT id FROM utilizadores WHERE email = ? AND data_nascimento = ?");
     $stmt->bind_param("ss", $email, $data_nasc);
     $stmt->execute();
@@ -16,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
-        $_SESSION['recuperar_user_id'] = $user['id']; // Guarda o ID na sessão para o próximo passo
+        $_SESSION['recuperar_user_id'] = $user['id']; 
         header("Location: nova_pass.php");
         exit;
     } else {
