@@ -2,23 +2,20 @@
 session_start();
 include 'config/db.php';
 
-// 1. SEGURANÇA: Apenas Admins podem entrar aqui
 if (!isset($_SESSION['user_id']) || $_SESSION['nivel_acesso'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// 2. PROCESSAR A CRIAÇÃO DE NOVO ADMIN
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nome = $_POST['nome'];
     $email = $_POST['email'];
-    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT); // Criptografia obrigatória
+    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT); 
 
-    // Verifica se email já existe
     $check = $conn->query("SELECT id FROM utilizadores WHERE email='$email'");
     
     if ($check->num_rows == 0) {
-        // Inserimos com nivel_acesso = 'admin' e qrcode_path a NULL (ou vazio)
+        
         $sql = "INSERT INTO utilizadores (nome, email, senha, nivel_acesso) VALUES ('$nome', '$email', '$senha', 'admin')";
         
         if ($conn->query($sql) === TRUE) {
@@ -76,7 +73,7 @@ include 'includes/header.php';
                     </thead>
                     <tbody>
                         <?php
-                        // Buscar todos os admins
+                        
                         $sql_admins = "SELECT nome, email FROM utilizadores WHERE nivel_acesso = 'admin'";
                         $result_admins = $conn->query($sql_admins);
 
