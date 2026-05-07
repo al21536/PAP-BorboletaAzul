@@ -2,24 +2,20 @@
 session_start();
 include 'config/db.php';
 
-// 1. VERIFICA SE ESTÁ LOGADO (Se não estiver, a variável fica null em vez de expulsar)
 $id_user = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 $mensagem = "";
 
-// 2. PROCESSAR INSCRIÇÃO (Apenas quem tem login pode executar isto)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_evento'])) {
     if (!$id_user) {
-        // Por segurança, se um visitante tentar forçar um POST, manda-o para o login
+        
         header("Location: login.php");
         exit;
     }
 
     $id_evento = $_POST['id_evento'];
 
-    // Verificar se já está inscrito
     $check = $conn->query("SELECT id FROM inscricoes WHERE id_utilizador = '$id_user' AND id_evento = '$id_evento'");
-    
-    // Verificar vagas
+
     $evento_check = $conn->query("SELECT vagas_totais, vagas_ocupadas FROM eventos WHERE id = '$id_evento'");
     $dados_evento = $evento_check->fetch_assoc();
 
@@ -28,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_evento'])) {
     } elseif ($dados_evento['vagas_ocupadas'] >= $dados_evento['vagas_totais']) {
         $mensagem = "<div style='background:#fff3cd; color:#856404; padding:10px; border-radius:5px; margin-bottom:20px; text-align:center;'>Lamentamos, mas as vagas esgotaram.</div>";
     } else {
-        // Realizar Inscrição
+        
         $conn->query("INSERT INTO inscricoes (id_utilizador, id_evento) VALUES ('$id_user', '$id_evento')");
         $conn->query("UPDATE eventos SET vagas_ocupadas = vagas_ocupadas + 1 WHERE id = '$id_evento'");
         
@@ -36,7 +32,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_evento'])) {
     }
 }
 
-// Configuração da Página
 $page_title = 'Eventos - Borboleta Azul';
 include 'includes/header.php';
 ?>
@@ -51,7 +46,7 @@ include 'includes/header.php';
 
     <div class="features" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
         <?php
-        // Buscar eventos futuros (ordenados por data mais próxima)
+        
         $sql = "SELECT * FROM eventos ORDER BY data_evento ASC";
         $result = $conn->query($sql);
 
@@ -61,8 +56,7 @@ include 'includes/header.php';
                 $data = date('d/m/Y', strtotime($row['data_evento']));
                 $hora = date('H:i', strtotime($row['data_evento']));
                 $vagas_restantes = $row['vagas_totais'] - $row['vagas_ocupadas'];
-                
-                // Verificar estado para o botão apenas se o utilizador estiver logado
+
                 $ja_inscrito = false;
                 if ($id_user) {
                     $ja_inscrito = $conn->query("SELECT id FROM inscricoes WHERE id_utilizador = '$id_user' AND id_evento = '$id_evento'")->num_rows > 0;
@@ -119,9 +113,7 @@ include 'includes/header.php';
                 <?php
             }
         } else {
-            // ==========================================
-            // ESTADO VAZIO (EMPTY STATE) INTELIGENTE
-            // ==========================================
+
             ?>
             <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 <span style="font-size: 4rem; display: block; margin-bottom: 20px; animation: float 3s ease-in-out infinite;">🦋</span>
@@ -132,7 +124,7 @@ include 'includes/header.php';
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                     
                     <?php 
-                    // BOTÃO DINÂMICO
+                    
                     if ($id_user): 
                     ?>
                         <a href="perfil.php" class="btn" style="width: auto; background-color: var(--azul-principal);">Voltar ao Meu Cartão</a>
