@@ -2,7 +2,6 @@
 session_start();
 include 'config/db.php';
 
-// Se já estiver logado, manda para o perfil
 if (isset($_SESSION['user_id'])) {
     if (isset($_SESSION['nivel_acesso']) && $_SESSION['nivel_acesso'] == 'admin') {
         header("Location: admin_painel.php");
@@ -12,7 +11,6 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Lógica de Login
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $senha = $_POST['senha'];
@@ -42,7 +40,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// Configuração da Página para o Header
 $page_title = 'Login - Fundação Borboleta Azul';
 include 'includes/header.php';
 ?>
